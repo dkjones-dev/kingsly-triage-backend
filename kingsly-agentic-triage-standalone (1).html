@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kingsly Medical Practice — Agentic Call Triage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F4F5F0; --panel: #FFFFFF; --ink: #1F2A24; --ink-soft: #55635B; --line: #DCE0D6;
+    --pine: #2F4F3E; --pine-soft: #E7EDE7;
+    --crisis: #7A2E2E; --crisis-bg: #F4E4E2;
+    --clinical: #A13D2C; --clinical-bg: #FBEAE6;
+    --high: #B8791F; --high-bg: #FBF0DD;
+    --standard: #4C6B63; --standard-bg: #E7EEEB;
+    --low: #8A8F87; --low-bg: #EEEFEB;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:'IBM Plex Sans', sans-serif; line-height:1.5; padding:0 0 4rem;}
+  .wrap{max-width:840px; margin:0 auto; padding:0 20px;}
+  header.hero{padding:2.75rem 20px 2rem; border-bottom:1px solid var(--line); background:var(--panel);}
+  .eyebrow{font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:var(--pine); margin:0 0 10px;}
+  h1{font-family:'Fraunces', serif; font-weight:500; font-size:32px; margin:0 0 12px; max-width:620px;}
+  .sub{color:var(--ink-soft); font-size:15px; max-width:560px; margin:0 0 20px;}
+  .stats{display:flex; gap:22px; flex-wrap:wrap; margin-bottom:20px;}
+  .stat .n{font-family:'Fraunces', serif; font-size:24px; color:var(--pine);}
+  .stat .l{font-size:11.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.05em;}
+  .actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+  button{font-family:'IBM Plex Sans', sans-serif; font-size:14px; font-weight:500; padding:11px 18px; border-radius:6px; border:1px solid var(--pine); background:var(--pine); color:#fff; cursor:pointer;}
+  button.secondary{background:transparent; color:var(--pine);}
+  button.tiny{padding:5px 10px; font-size:12px; border-radius:5px;}
+  button:disabled{opacity:0.45; cursor:default;}
+  button:active:not(:disabled){transform:scale(0.98);}
+  .status-line{font-size:13px; color:var(--ink-soft); margin-top:10px; min-height:18px;}
+  section{padding:1.6rem 0;}
+  .section-label{font-family:'IBM Plex Mono', monospace; font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-soft); margin:0 0 12px; display:flex; align-items:center; gap:8px;}
+  .queue-group{margin-bottom:26px;}
+  .queue-title{font-family:'Fraunces', serif; font-size:17px; margin:0 0 10px; display:flex; align-items:center; gap:8px;}
+  .queue-count{font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--ink-soft); font-weight:400;}
+  .call{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:10px;}
+  .call-top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; cursor:pointer;}
+  .call-caller{font-weight:500; font-size:14.5px;}
+  .call-time{font-family:'IBM Plex Mono', monospace; font-size:11.5px; color:var(--ink-soft);}
+  .call-transcript{color:var(--ink-soft); font-size:13.5px; margin:7px 0 0; font-style:italic;}
+  .badge{font-family:'IBM Plex Mono', monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.04em; padding:4px 8px; border-radius:5px; white-space:nowrap;}
+  .badge.crisis{background:var(--crisis-bg); color:var(--crisis);}
+  .badge.clinical{background:var(--clinical-bg); color:var(--clinical);}
+  .badge.high{background:var(--high-bg); color:var(--high);}
+  .badge.standard{background:var(--standard-bg); color:var(--standard);}
+  .badge.low{background:var(--low-bg); color:var(--low);}
+  .badge.pending{background:var(--pine-soft); color:var(--pine);}
+  .detail{margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); font-size:13px; display:none;}
+  .detail.open{display:block;}
+  .detail .row{margin-bottom:6px;}
+  .detail b{font-weight:600;}
+  .override-row{display:flex; gap:8px; align-items:center; margin-top:10px; flex-wrap:wrap;}
+  select{font-family:'IBM Plex Sans', sans-serif; font-size:12.5px; padding:5px 8px; border-radius:5px; border:1px solid var(--line); background:#fff;}
+  .approved-tag{font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--pine); background:var(--pine-soft); padding:3px 8px; border-radius:5px;}
+  .report{background:var(--pine); color:#fff; border-radius:10px; padding:22px; white-space:pre-wrap; font-size:14.5px; line-height:1.65; display:none;}
+  .report.open{display:block;}
+  .breakdown-group{margin-bottom:18px;}
+  .breakdown-title{font-family:'Fraunces', serif; font-size:15px; margin:0 0 8px; display:flex; align-items:center; gap:8px;}
+  .breakdown-row{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 12px; background:var(--panel); border:1px solid var(--line); border-radius:7px; margin-bottom:6px; font-size:13px;}
+  .breakdown-left{display:flex; flex-direction:column; gap:2px;}
+  .breakdown-meta{color:var(--ink-soft); font-size:11.5px;}
+  .review-tag{font-family:'IBM Plex Mono', monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.03em; padding:3px 7px; border-radius:5px; white-space:nowrap;}
+  .review-tag.reviewed{background:var(--pine-soft); color:var(--pine);}
+  .review-tag.pending{background:#F1E9D8; color:#9A7B2E;}
+  footer.note{max-width:840px; margin:2rem auto 0; padding:0 20px; font-size:12.5px; color:var(--ink-soft);}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Agentic AI · live LLM triage</p>
+    <h1>Kingsly Medical Practice — Call Triage Agent</h1>
+    <p class="sub">This agent reads each voicemail live and decides — crisis escalation, clinical review, or front-desk callback with a priority tier — the same way a real LLM-based agent would, not by matching keywords. Staff review every classification and can override before the batch report is generated.</p>
+    <div class="stats">
+      <div class="stat"><div class="n" id="statTotal">37</div><div class="l">missed calls</div></div>
+      <div class="stat"><div class="n" id="statDone">0</div><div class="l">triaged</div></div>
+      <div class="stat"><div class="n" id="statApproved">0</div><div class="l">staff-approved</div></div>
+    </div>
+    <div class="actions">
+      <button id="runBtn">Run triage agent</button>
+      <button id="reportBtn" class="secondary" disabled>Generate callback report</button>
+    </div>
+    <div class="status-line" id="status"></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <section>
+    <p class="section-label">Call queues</p>
+    <div id="queues"></div>
+  </section>
+
+  <section id="reportSection" style="display:none;">
+    <p class="section-label">Batch callback report — for front desk</p>
+    <div class="report" id="reportIntro"></div>
+    <div id="reportBreakdown"></div>
+  </section>
+</div>
+
+<footer class="note">
+  Simulated call data, fictional aliases only — no real patient information. Triage decisions and the batch report are generated live by Claude, reasoning over each transcript directly, rather than matching fixed keyword rules.
+</footer>
+
+<script>
+const calls = [
+  {id:1, caller:"Patient_001", time:"07:52", transcript:"Calling for my wife, she's having chest tightness and shortness of breath since this morning, it isn't going away."},
+  {id:2, caller:"Patient_002", time:"08:04", transcript:"Just need to reschedule my annual physical from Thursday to next week, no rush."},
+  {id:3, caller:"Patient_003", time:"10:10", transcript:"Hi, I started that new blood pressure pill three days ago and I've been really dizzy, almost fell getting out of bed yesterday."},
+  {id:4, caller:"Patient_004", time:"11:30", transcript:"This is regarding my son's school physical form, just need it filled out and faxed to the school by Friday."},
+  {id:5, caller:"Patient_005", time:"12:45", transcript:"Hey, it's about my referral to the cardiologist, just checking on the status, no rush."},
+  {id:6, caller:"Patient_006", time:"10:19", transcript:"I need to reschedule tomorrow's appointment, I haven't been feeling great this week and don't think I can make it in."},
+  {id:7, caller:"Patient_007", time:"09:40", transcript:"Good morning, I just got back from the hospital and need my home health nurse back."},
+  {id:8, caller:"Patient_008", time:"13:48", transcript:"Hi, I need my daughter's vaccine schedule for school. Can I come and pick it up today after my shift?"},
+  {id:9, caller:"Patient_009", time:"14:20", transcript:"Hey, my son's school just called and said that he was in an accident during gym. A boy accidentally hit him in the head with the baseball bat and he's a little dizzy."},
+  {id:10, caller:"Patient_010", time:"10:47", transcript:"Uh, I just fell in my garden and can barely walk. My knee is swelling up pretty bad. What should I do?"},
+  {id:11, caller:"Patient_011", time:"00:20", transcript:"I just took my baby's temperature and it's 102 degrees and she sounds like she's wheezing. I don't know what to do, please call me back."},
+  {id:12, caller:"Patient_012", time:"14:30", transcript:"I'm tired of this new prescription. I can't sleep anymore. I need it changed. Let me know when I can pick up my new prescription, doc."},
+  {id:13, caller:"Patient_013", time:"05:00", transcript:"I speak little English. Need doctor help."},
+  {id:14, caller:"Patient_014", time:"10:57", transcript:"Hi, I need to schedule an appointment for my dad. He's been complaining of a nagging cough that won't go away, two weeks now, and his health is getting worse."},
+  {id:15, caller:"Patient_015", time:"16:50", transcript:"I need to see ya doc, I just went to the bathroom and saw blood in the toilet. I don't know what's wrong, can I see you tomorrow?"},
+  {id:16, caller:"Patient_016", time:"11:38", transcript:"I'm so sick. I can't keep nothing down. Been throwing up all night long. I hope I didn't catch that bug going around my daughter's school."},
+  {id:17, caller:"Patient_017", time:"10:58", transcript:"Morning. Can you double check on when my daughter's appointment is?"},
+  {id:18, caller:"Patient_018", time:"13:20", transcript:"I have the worst migraine and lost my vision completely. I can't make it to my afternoon appointment. I'll call back to reschedule."},
+  {id:19, caller:"Patient_019", time:"09:17", transcript:"I know I just saw you yesterday, but calling on those labs. What's the result?"},
+  {id:20, caller:"Patient_020", time:"14:13", transcript:"Hey, sorry to bother you, but I've been light-headed all day. Can I come in for a blood pressure check?"},
+  {id:21, caller:"Patient_021", time:"05:15", transcript:"I know I shouldn't be calling this early, but I've lost the will to keep going. I'm just tired."},
+  {id:22, caller:"Patient_022", time:"08:11", transcript:"Morning all, just checking to see what time the flu shot fair was starting. Call me back. Thanks."},
+  {id:23, caller:"Patient_023", time:"10:22", transcript:"Hi. Can I get a copy of my medical records sent to my oncologist?"},
+  {id:24, caller:"Patient_024", time:"18:23", transcript:"I can barely breathe. It hurts to inhale. Should I go to the ER?"},
+  {id:25, caller:"Patient_025", time:"15:22", transcript:"Hi, I'm so sorry about yesterday's appointment. I completely forgot. Can I reschedule for next week, afternoon works."},
+  {id:26, caller:"Patient_026", time:"12:25", transcript:"Hi. Can you remind me how much am I going to owe if I come see you tomorrow for my annual check-up?"},
+  {id:27, caller:"Patient_027", time:"11:18", transcript:"Good morning. I just got a new job and my insurance changed. Who do I need to speak with so my records are up-to-date?"},
+  {id:28, caller:"Patient_028", time:"16:15", transcript:"Hi. I want to change doctors. I didn't appreciate how I was talked to the last time I came in."},
+  {id:29, caller:"Patient_029", time:"08:01", transcript:"Good morning. I'm new to the area and need a new doctor. Are you accepting new patients?"},
+  {id:30, caller:"Patient_030", time:"10:11", transcript:"Hi. I really need to see the doctor ASAP. I have this tingling in my fingers and my arm is numb."},
+  {id:31, caller:"Patient_031", time:"12:30", transcript:"Hey. I'm returning a call. Someone from this number called and asked for me to call them back. No idea what this is about."},
+  {id:32, caller:"Patient_032", time:"09:05", transcript:"Calling to confirm my mom's upcoming appointment because her arthritis is flaring up again and its hard for her to walk."},
+  {id:33, caller:"Patient_033", time:"11:42", transcript:"Hi. I just need to speak to someone about this lump in my neck. It isn't bothering me or anything. It just looks weird. No rush, just want to ask some questions. Thanks."},
+  {id:34, caller:"Patient_034", time:"13:15", transcript:"This is irritating that I can't speak to someone and have to leave a message, but anyway. I pulled a muscle running and can't bare weight on it. Can someone please call me back and tell me what I need to do? Thanks."},
+  {id:35, caller:"Patient_035", time:"08:30", transcript:"Good morning. I'm calling to check on my labs. Thanks."},
+  {id:36, caller:"Patient_036", time:"15:50", transcript:"I can't sleep. This new rash is pretty issue and leaking something. Please call me back."},
+  {id:37, caller:"Patient_037", time:"19:10", transcript:"I don't know who to call anymore. I need to leave my home situation tonight. If you get this message, please text me, don't call."}
+];
+
+let results = {};
+let approved = {};
+
+const QUEUE_ORDER = ["crisis", "safety", "clinical", "admin"];
+const QUEUE_LABEL = {crisis: "Immediate crisis escalation", safety: "Safety concern — resource provided", clinical: "Clinical review required", admin: "Front desk callback queue"};
+const PRIORITY_RANK = {"Immediate":0, "N/A":1, "High":2, "Standard":3, "Low":4};
+
+function badgeClass(r){
+  if(r.queue === "crisis") return "crisis";
+  if(r.queue === "safety") return "crisis";
+  if(r.queue === "clinical") return "clinical";
+  if(r.priority === "High") return "high";
+  if(r.priority === "Standard") return "standard";
+  return "low";
+}
+
+function callbackWindowFor(priority){
+  switch(priority){
+    case "Immediate": return "Immediate — staff-assigned, needs urgent attention";
+    case "N/A": return "Within 24 hours (clinical review)";
+    case "High": return "Before end of day, this business day";
+    case "Standard": return "By the next scheduled batch (within one batch cycle)";
+    case "Low": return "Within 72 hours, next available batch cycle";
+    default: return "Review needed";
+  }
+}
+
+function render(){
+  const container = document.getElementById('queues');
+  container.innerHTML = '';
+
+  if(Object.keys(results).length === 0){
+    container.innerHTML = '<p style="color:var(--ink-soft); font-size:14px;">Click "Run triage agent" to begin.</p>';
+    return;
+  }
+
+  QUEUE_ORDER.forEach(qkey=>{
+    const items = calls.filter(c => results[c.id] && results[c.id].queue === qkey);
+    if(items.length === 0) return;
+    if(qkey === "admin"){
+      items.sort((a,b) => (PRIORITY_RANK[results[a.id].priority] ?? 9) - (PRIORITY_RANK[results[b.id].priority] ?? 9));
+    }
+    const group = document.createElement('div');
+    group.className = 'queue-group';
+    group.innerHTML = `<div class="queue-title">${QUEUE_LABEL[qkey]} <span class="queue-count">(${items.length})</span></div>`;
+    const list = document.createElement('div');
+
+    items.forEach(c=>{
+      const r = results[c.id];
+      const div = document.createElement('div');
+      div.className = 'call';
+      div.innerHTML = `
+        <div class="call-top" data-toggle="${c.id}">
+          <div>
+            <div class="call-caller">${c.caller} <span class="call-time">${c.time}</span></div>
+            <p class="call-transcript">"${c.transcript}"</p>
+          </div>
+          <span class="badge ${badgeClass(r)}">${r.priority === "N/A" ? "Clinical" : r.priority}</span>
+        </div>
+        <div class="detail" id="detail-${c.id}">
+          ${r.category ? `<div class="row"><b>Category:</b> ${r.category}</div>` : ''}
+          ${r.score !== null && r.score !== undefined ? `<div class="row"><b>Score:</b> ${r.score}</div>` : ''}
+          <div class="row"><b>Agent reasoning:</b> ${r.reasoning}</div>
+          <div class="row"><b>Callback window:</b> ${r.callback_window}</div>
+          <div class="override-row">
+            <span style="font-size:12px; color:var(--ink-soft);">Staff review:</span>
+            <select data-override="${c.id}">
+              <option value="Immediate" ${r.priority==="Immediate"?"selected":""}>Immediate</option>
+              <option value="N/A" ${r.priority==="N/A"?"selected":""}>Clinical review</option>
+              <option value="High" ${r.priority==="High"?"selected":""}>High</option>
+              <option value="Standard" ${r.priority==="Standard"?"selected":""}>Standard</option>
+              <option value="Low" ${r.priority==="Low"?"selected":""}>Low</option>
+            </select>
+            ${approved[c.id] ? '<span class="approved-tag">Approved</span>' : `<button class="tiny secondary" data-approve="${c.id}">Approve</button>`}
+          </div>
+        </div>
+      `;
+      list.appendChild(div);
+    });
+    group.appendChild(list);
+    container.appendChild(group);
+  });
+
+  document.querySelectorAll('[data-toggle]').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      document.getElementById(`detail-${el.dataset.toggle}`).classList.toggle('open');
+    });
+  });
+  document.querySelectorAll('[data-approve]').forEach(el=>{
+    el.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      approved[el.dataset.approve] = true;
+      document.getElementById('statApproved').textContent = Object.keys(approved).length;
+      render();
+    });
+  });
+  document.querySelectorAll('[data-override]').forEach(el=>{
+    el.addEventListener('change', (e)=>{
+      e.stopPropagation();
+      const id = el.dataset.override;
+      results[id].priority = el.value;
+      results[id].callback_window = callbackWindowFor(el.value);
+      approved[id] = true;
+      document.getElementById('statApproved').textContent = Object.keys(approved).length;
+      render();
+    });
+  });
+}
+render();
+
+// Points at YOUR live backend on Render — not Anthropic directly, and not localhost.
+const BACKEND_URL = "https://kingsly-triage-backend.onrender.com";
+
+async function callClaude(promptText){
+  const response = await fetch(`${BACKEND_URL}/api/claude`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt: promptText, max_tokens: 1000 })
+  });
+  if(!response.ok){
+    const err = await response.json().catch(()=>({error:"Unknown error"}));
+    throw new Error(err.error || "Backend request failed");
+  }
+  const data = await response.json();
+  return data.text;
+}
+
+function buildPrompt(batch){
+  return `You are a clinical intake triage agent for a rural family medicine front desk (Kingsly Medical Practice). For each voicemail below, decide which queue it belongs in and classify it fully. Read for meaning, not just keywords — callers phrase things differently than a script would.
+
+Queues, checked in this priority order:
+- "crisis": the caller expresses distress, hopelessness, or suicidal language. This overrides everything else.
+- "safety": the caller describes a possible domestic safety or abuse situation — e.g. needing to leave a home situation, not feeling safe, being hurt by someone. Distinct from "crisis": this is about safety from another person, not mental health distress. Note if the caller states a contact preference (e.g. "text me, don't call").
+- "clinical": the caller describes a physical symptom, injury, or medication issue needing a clinician's review — even if the caller frames it as just wanting an appointment, and even if the symptom is described informally (e.g. "a lump," "pulled a muscle," "arthritis flaring up," "can't bear weight," "a new rash").
+- "admin": everything else — scheduling, billing, records, referrals, forms, general questions.
+
+For "admin" calls only, also assign:
+- "category": one of Scheduling, Form Completion, Medical Records, Referrals, Prescription Refills, New Patient Intake, Test Results, Program Information, Patient Relations, Billing/Insurance, or Unclear/Needs Clarification
+- "priority": "High" (real deadline, missed opportunity, or stacked urgency signals), "Standard" (some urgency but no hard deadline), or "Low" (no urgency signals, or the caller explicitly said not to rush)
+- "score": a rough 0-9 urgency score consistent with the priority tier
+- "callback_window": "Before end of day, this business day" for High; "By the next scheduled batch" for Standard; "Within 72 hours, next available batch cycle" for Low
+
+For "crisis" calls: priority is "Immediate", category is null, score is null, callback_window is "Immediate — 988 provided on call".
+For "safety" calls: priority is "Immediate", category is null, score is null, callback_window is "Immediate — hotline provided, staff follow-up ASAP" (or note the stated contact preference if one was given).
+For "clinical" calls: priority is "N/A", category is null, score is null, callback_window is "Within 24 hours (clinical review)".
+
+Always include "reasoning": one plain-language sentence a front-desk staffer would understand, explaining the classification.
+
+Respond ONLY with a JSON array, no preamble, no markdown fences. Each item: {"id": number, "queue": "crisis"|"safety"|"clinical"|"admin", "category": string|null, "priority": string, "score": number|null, "reasoning": string, "callback_window": string}
+
+Voicemails:
+${batch.map(c => `Call ${c.id} (${c.caller}, ${c.time}): "${c.transcript}"`).join('\n')}`;
+}
+
+function chunk(arr, size){
+  const out = [];
+  for(let i=0;i<arr.length;i+=size) out.push(arr.slice(i,i+size));
+  return out;
+}
+
+document.getElementById('runBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('runBtn');
+  const status = document.getElementById('status');
+  btn.disabled = true;
+  results = {};
+  approved = {};
+  document.getElementById('statApproved').textContent = 0;
+
+  const batches = chunk(calls, 8);
+  let done = 0;
+
+  for(const batch of batches){
+    status.textContent = `Agent is reading calls ${batch[0].id}–${batch[batch.length-1].id} of ${calls.length}...`;
+    try{
+      const text = await callClaude(buildPrompt(batch));
+      const clean = text.replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(clean);
+      parsed.forEach(item => { results[item.id] = item; });
+      done += batch.length;
+      document.getElementById('statDone').textContent = done;
+      render();
+    }catch(err){
+      status.textContent = `The agent hit an error on calls ${batch[0].id}–${batch[batch.length-1].id}. You can click Run again to retry.`;
+      console.error(err);
+      btn.disabled = false;
+      return;
+    }
+  }
+
+  status.textContent = 'Triage complete. Tap any call to see the agent\'s reasoning and override if needed.';
+  document.getElementById('reportBtn').disabled = false;
+  btn.disabled = false;
+});
+
+function buildBreakdown(){
+  const container = document.getElementById('reportBreakdown');
+  container.innerHTML = '';
+
+  function reviewTag(id){
+    return approved[id]
+      ? '<span class="review-tag reviewed">Staff-reviewed</span>'
+      : '<span class="review-tag pending">Agent classification</span>';
+  }
+
+  function addGroup(title, ids){
+    if(ids.length === 0) return;
+    const group = document.createElement('div');
+    group.className = 'breakdown-group';
+    let rows = '';
+    ids.forEach(id=>{
+      const c = calls.find(x=>x.id===id);
+      const r = results[id];
+      const detail = r.category ? `${r.category} · ${r.callback_window}` : r.callback_window;
+      rows += `
+        <div class="breakdown-row">
+          <div class="breakdown-left">
+            <strong>${c.caller}</strong>
+            <span class="breakdown-meta">${c.time} — ${detail}</span>
+          </div>
+          ${reviewTag(id)}
+        </div>`;
+    });
+    group.innerHTML = `<div class="breakdown-title">${title} <span class="queue-count">(${ids.length})</span></div>${rows}`;
+    container.appendChild(group);
+  }
+
+  const crisisIds = calls.filter(c=>results[c.id]?.queue==='crisis').map(c=>c.id);
+  const safetyIds = calls.filter(c=>results[c.id]?.queue==='safety').map(c=>c.id);
+  const clinicalIds = calls.filter(c=>results[c.id]?.queue==='clinical').map(c=>c.id);
+  const adminIds = calls.filter(c=>results[c.id]?.queue==='admin');
+  const highIds = adminIds.filter(c=>results[c.id].priority==='High').map(c=>c.id);
+  const standardIds = adminIds.filter(c=>results[c.id].priority==='Standard').map(c=>c.id);
+  const lowIds = adminIds.filter(c=>results[c.id].priority==='Low').map(c=>c.id);
+  const otherAdminIds = adminIds.filter(c=>!['High','Standard','Low'].includes(results[c.id].priority)).map(c=>c.id);
+
+  addGroup('🚨 Crisis escalation', crisisIds);
+  addGroup('🛡️ Safety concern', safetyIds);
+  addGroup('🩺 Clinical review', clinicalIds);
+  addGroup('📋 Front desk — High priority', highIds);
+  addGroup('📋 Front desk — Standard priority', standardIds);
+  addGroup('📋 Front desk — Low priority', lowIds);
+  addGroup('⚠️ Front desk — reassigned by staff (needs a category check)', otherAdminIds);
+}
+
+document.getElementById('reportBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('reportBtn');
+  const status = document.getElementById('status');
+  btn.disabled = true;
+  status.textContent = 'Drafting the batch callback report...';
+
+  // The structured breakdown is built entirely in code — guaranteed accurate,
+  // never dependent on the model choosing to preserve details in free text.
+  buildBreakdown();
+
+  // Claude only writes a short, warm opening line — a job well suited to
+  // language generation, since nothing structural depends on it being exact.
+  const stats = {
+    crisis: calls.filter(c=>results[c.id]?.queue==='crisis').length,
+    safety: calls.filter(c=>results[c.id]?.queue==='safety').length,
+    clinical: calls.filter(c=>results[c.id]?.queue==='clinical').length,
+    high: calls.filter(c=>results[c.id]?.queue==='admin' && results[c.id].priority==='High').length,
+    standard: calls.filter(c=>results[c.id]?.queue==='admin' && results[c.id].priority==='Standard').length,
+    low: calls.filter(c=>results[c.id]?.queue==='admin' && results[c.id].priority==='Low').length,
+  };
+
+  const prompt = `Write a warm, 2-sentence opening line for a front-desk morning huddle at Kingsly Medical Practice, based on these counts: ${stats.crisis} crisis escalation(s), ${stats.safety} safety concern(s), ${stats.clinical} clinical review(s), ${stats.high} high-priority front-desk calls, ${stats.standard} standard-priority, ${stats.low} low-priority. Plain language, no markdown, no list — just 2 short sentences setting the tone for the day.`;
+
+  try{
+    const text = await callClaude(prompt);
+    document.getElementById('reportIntro').textContent = text.trim();
+    document.getElementById('reportSection').style.display = 'block';
+    document.getElementById('reportIntro').classList.add('open');
+    status.textContent = 'Report ready below.';
+  }catch(err){
+    status.textContent = 'Could not generate the opening line, but the breakdown below is still accurate.';
+    document.getElementById('reportIntro').textContent = "Here's this batch's callback queue.";
+    document.getElementById('reportSection').style.display = 'block';
+    document.getElementById('reportIntro').classList.add('open');
+  }
+  btn.disabled = false;
+});
+</script>
+
+</body>
+</html>
