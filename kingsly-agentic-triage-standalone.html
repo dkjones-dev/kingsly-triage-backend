@@ -215,11 +215,10 @@ function render(){
           <div class="override-row">
             <span style="font-size:12px; color:var(--ink-soft);">Staff review:</span>
             <select data-override="${c.id}">
-              <option value="Immediate" ${r.priority==="Immediate"?"selected":""}>Immediate</option>
               <option value="N/A" ${r.priority==="N/A"?"selected":""}>Clinical review</option>
-              <option value="High" ${r.priority==="High"?"selected":""}>High</option>
-              <option value="Standard" ${r.priority==="Standard"?"selected":""}>Standard</option>
-              <option value="Low" ${r.priority==="Low"?"selected":""}>Low</option>
+              <option value="High" ${r.priority==="High"?"selected":""}>Admin — High</option>
+              <option value="Standard" ${r.priority==="Standard"?"selected":""}>Admin — Standard</option>
+              <option value="Low" ${r.priority==="Low"?"selected":""}>Admin — Low</option>
             </select>
             ${approved[c.id] ? '<span class="approved-tag">Approved</span>' : `<button class="tiny secondary" data-approve="${c.id}">Approve</button>`}
           </div>
@@ -248,8 +247,17 @@ function render(){
     el.addEventListener('change', (e)=>{
       e.stopPropagation();
       const id = el.dataset.override;
-      results[id].priority = el.value;
-      results[id].callback_window = callbackWindowFor(el.value);
+      const value = el.value;
+      results[id].priority = value;
+      results[id].callback_window = callbackWindowFor(value);
+      if(value === "N/A"){
+        results[id].queue = "clinical";
+      } else {
+        results[id].queue = "admin";
+        if(!results[id].category){
+          results[id].category = "Unclear / Needs Clarification";
+        }
+      }
       approved[id] = true;
       document.getElementById('statApproved').textContent = Object.keys(approved).length;
       render();
